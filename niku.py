@@ -4,12 +4,9 @@ import sys
 import time
 import RPi.GPIO as GPIO
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(2, GPIO.OUT)
-
 DEVICE_ID='28-03146b771aff'
 DEVICE_FILE='/sys/bus/w1/devices/%s/w1_slave' % (DEVICE_ID)
-TARGET_TEMP = 60
+TARGET=60
 
 def read_temp():
     try:
@@ -17,18 +14,53 @@ def read_temp():
         lines = file.readlines()
         temp = lines[1].split('t=')[1]
         return float(temp) / 1000
-    except e:
-        return -1
+    except Exception as e:
+        print e
+        return 100
 
-t=0
+def output(power):
+    if power > 1:
+        power = 1
+    on = power * 10
+    off = (1 - power) * 10
+    if on > 0:
+        GPIO.output(2,GPIO.HIGH)
+        time.sleep(on)
+    if off > 0:
+        GPIO.output(2,GPIO.LOW)
+        time.sleep(off)
+
+def p(temp, target, kp):
+    d = target - temp
+    if d < 0:
+        return 0
+    power = d / target * kp
+    return power
+
+def i(prev, now, target, ki):
+    if prev == 0:
+        return 0
+    d1 = target - now
+    d2 = target - prev
+    if d1 < 0:
+        return 0
+    if d2 < 0:
+        d2 = 0
+    return (d1 + d2) * 10 / 2 * ki
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(2, GPIO.OUT)
+prev=0
+
 while True:
     temp = read_temp()
-    on = temp < TARGET_TEMP
-    print t, temp, on
+    pg = p(temp, TARGET, 2.7)
+    ig = i(prev, temp, TARGET, 0.005)
+    power = pg + ig
+    if power > 0:
+        power += 0.13
+    prev = temp
+    print t, temp, power
     sys.stdout.flush()
-    if on:
-        GPIO.output(2,GPIO.HIGH)
-    else:
-        GPIO.output(2,GPIO.LOW)
-    time.sleep(1)
-    t+=1
+    output(power)
+    t += 10
