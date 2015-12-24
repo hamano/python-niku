@@ -6,7 +6,6 @@ import RPi.GPIO as GPIO
 
 DEVICE_ID='28-03146b771aff'
 DEVICE_FILE='/sys/bus/w1/devices/%s/w1_slave' % (DEVICE_ID)
-TARGET=60
 
 def read_temp():
     try:
@@ -50,13 +49,17 @@ def i(prev, now, target, ki):
 
 
 def main():
+    if len(sys.argv) < 2:
+        print('usafge: %s TARGET_TEMPERTURE' % (sys.argv[0]))
+        sys.exit(0)
+    target = float(sys.argv[1])
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(2, GPIO.OUT)
     prev=0
     while True:
         temp = read_temp()
-        pg = p(temp, TARGET, 2.7)
-        ig = i(prev, temp, TARGET, 0.005)
+        pg = p(temp, target, 2.7)
+        ig = i(prev, temp, target, 0.005)
         power = pg + ig
         if power > 0:
             power += 0.13

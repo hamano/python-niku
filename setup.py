@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='niku',
-    version='1.0',
+    version='2.0',
     description="PID Controller for sous vide",
     url="https://github.com/hamano/python-niku/",
     author = "Tsukasa Hamano",
