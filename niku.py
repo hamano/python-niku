@@ -48,19 +48,20 @@ def i(prev, now, target, ki):
         d2 = 0
     return (d1 + d2) * 10 / 2 * ki
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(2, GPIO.OUT)
-prev=0
 
-while True:
-    temp = read_temp()
-    pg = p(temp, TARGET, 2.7)
-    ig = i(prev, temp, TARGET, 0.005)
-    power = pg + ig
-    if power > 0:
-        power += 0.13
-    prev = temp
-    print t, temp, power
-    sys.stdout.flush()
-    output(power)
-    t += 10
+def main():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(2, GPIO.OUT)
+    prev=0
+    while True:
+        temp = read_temp()
+        pg = p(temp, TARGET, 2.7)
+        ig = i(prev, temp, TARGET, 0.005)
+        power = pg + ig
+        if power > 0:
+            power += 0.13
+        prev = temp
+        print t, temp, power
+        sys.stdout.flush()
+        output(power)
+        t += 10
