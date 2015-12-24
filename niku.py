@@ -68,3 +68,6 @@ def main():
         sys.stdout.flush()
         output(power)
         t += 10
+
+if __name__ == "__main__":
+    main()
