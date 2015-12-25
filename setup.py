@@ -5,9 +5,9 @@ from setuptools import setup
 
 setup(
     name='niku',
-    version='2.0',
+    version='2.0.1',
     description="PID Controller for sous vide",
-    url="https://github.com/hamano/python-niku/",
+    url="http://www.cuspy.org/diary/raspberrypi-roastbeef/",
     author = "Tsukasa Hamano",
     author_email = "code@cuspy.org",
     entry_points="""
