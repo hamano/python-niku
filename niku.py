@@ -6,6 +6,8 @@ import RPi.GPIO as GPIO
 
 DEVICE_ID='28-03146b771aff'
 DEVICE_FILE='/sys/bus/w1/devices/%s/w1_slave' % (DEVICE_ID)
+GPIO_RELAY=21
+DEBUG=False
 
 def read_temp():
     try:
@@ -23,10 +25,10 @@ def output(power):
     on = power * 10
     off = (1 - power) * 10
     if on > 0:
-        GPIO.output(2,GPIO.HIGH)
+        GPIO.output(GPIO_RELAY, GPIO.HIGH)
         time.sleep(on)
     if off > 0:
-        GPIO.output(2,GPIO.LOW)
+        GPIO.output(GPIO_RELAY, GPIO.LOW)
         time.sleep(off)
 
 def p(temp, target, kp):
@@ -36,33 +38,39 @@ def p(temp, target, kp):
     power = d / target * kp
     return power
 
-def i(prev, now, target, ki):
-    if prev == 0:
-        return 0
-    d1 = target - now
-    d2 = target - prev
-    if d1 < 0:
-        return 0
-    if d2 < 0:
-        d2 = 0
-    return (d1 + d2) * 10 / 2 * ki
-
+def i(hist, target, ki):
+    s = 0
+    for i in range(len(hist)-1):
+        d1 = target - hist[i]
+        d2 = target - hist[i+1]
+        s += (d1 + d2) / 2 * ki
+    return s
 
 def main():
     if len(sys.argv) < 2:
         print('usafge: %s TARGET_TEMPERTURE' % (sys.argv[0]))
         sys.exit(0)
     target = float(sys.argv[1])
+    GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(2, GPIO.OUT)
+    GPIO.setup(GPIO_RELAY, GPIO.OUT)
+    hist = []
     prev=0
+    t=0
     while True:
         temp = read_temp()
-        pg = p(temp, target, 2.7)
-        ig = i(prev, temp, target, 0.005)
+        hist.insert(0, temp)
+        if len(hist) > 7:
+            hist.pop()
+        pg = p(temp, target, 3)
+        ig = i(hist, target, 0.01)
+        if DEBUG:
+            print("pg: %f" % (pg))
+            print("ig: %f" % (ig))
+            print(hist)
         power = pg + ig
         if power > 0:
-            power += 0.13
+            power += 0.1
         prev = temp
         print t, temp, power
         sys.stdout.flush()
