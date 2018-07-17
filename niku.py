@@ -2,22 +2,24 @@
 
 import sys
 import time
+import glob
 import RPi.GPIO as GPIO
 
-DEVICE_ID='28-03146b771aff'
-DEVICE_FILE='/sys/bus/w1/devices/%s/w1_slave' % (DEVICE_ID)
+devices = glob.glob('/sys/bus/w1/devices/*/w1_slave')
+if len(devices) == 0:
+    raise Exception("DS18B20 not found.")
+elif len(devices) > 1:
+    raise Exception("multiple 1-wire devices found.")
+
+DEVICE_FILE=devices[0]
 GPIO_RELAY=21
 DEBUG=False
 
 def read_temp():
-    try:
-        file = open(DEVICE_FILE)
-        lines = file.readlines()
-        temp = lines[1].split('t=')[1]
-        return float(temp) / 1000
-    except Exception as e:
-        print e
-        return 100
+    file = open(DEVICE_FILE)
+    lines = file.readlines()
+    temp = lines[1].split('t=')[1]
+    return float(temp) / 1000
 
 def output(power):
     if power > 1:
@@ -58,7 +60,12 @@ def main():
     prev=0
     t=0
     while True:
-        temp = read_temp()
+        try:
+            temp = read_temp()
+        except Exception as e:
+            print(e)
+            time.sleep(1)
+            continue
         hist.insert(0, temp)
         if len(hist) > 7:
             hist.pop()
