@@ -11,15 +11,17 @@ if len(devices) == 0:
 elif len(devices) > 1:
     raise Exception("multiple 1-wire devices found.")
 
-DEVICE_FILE=devices[0]
-GPIO_RELAY=21
-DEBUG=False
+DEVICE_FILE = devices[0]
+GPIO_RELAY = 21
+DEBUG = False
+
 
 def read_temp():
     file = open(DEVICE_FILE)
     lines = file.readlines()
     temp = lines[1].split('t=')[1]
     return float(temp) / 1000
+
 
 def output(power):
     if power > 1:
@@ -33,12 +35,14 @@ def output(power):
         GPIO.output(GPIO_RELAY, GPIO.LOW)
         time.sleep(off)
 
+
 def p(temp, target, kp):
     d = target - temp
     if d < 0:
         return 0
     power = d / target * kp
     return power
+
 
 def i(hist, target, ki):
     s = 0
@@ -47,6 +51,7 @@ def i(hist, target, ki):
         d2 = target - hist[i+1]
         s += (d1 + d2) / 2 * ki
     return s
+
 
 def main():
     if len(sys.argv) < 2:
@@ -57,8 +62,8 @@ def main():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(GPIO_RELAY, GPIO.OUT)
     hist = []
-    prev=0
-    t=0
+    prev = 0
+    t = 0
     while True:
         try:
             temp = read_temp()
@@ -83,6 +88,7 @@ def main():
         sys.stdout.flush()
         output(power)
         t += 10
+
 
 if __name__ == "__main__":
     main()
